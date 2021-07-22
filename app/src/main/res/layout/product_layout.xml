@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:weightSum="4"
+        app:cardCornerRadius="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:orientation="vertical"
+                   android:layout_marginTop="20dp"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/pDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="27/08/2021 3:10"
+                        android:textSize="12dp"
+                        android:layout_marginBottom="5dp"
+                        android:textAlignment="center"
+                        android:textColor="#3F51B5" />
+
+                    <TextView
+                        android:id="@+id/pName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"
+                        android:text="Pizza"
+                        android:layout_marginBottom="5dp"
+                        android:textColor="#000000" />
+                    <TextView
+                        android:id="@+id/pUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1*1 piece"
+                        android:textSize="12dp"
+                        android:textAlignment="center"
+                        android:textColor="#3F51B5" />
+                </LinearLayout>
+
+
+                <TextView
+                    android:id="@+id/pPurchase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.4"
+                    android:layout_marginStart="10dp"
+                    android:textStyle="bold"
+                    android:text="50"
+                    android:layout_marginTop="30dp"
+                    android:textSize="18dp"
+                    android:textAlignment="center"
+                    android:textColor="#F44336" />
+
+                <TextView
+                    android:id="@+id/pSell"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.2"
+                    android:text="1400"
+                    android:layout_marginTop="30dp"
+                    android:textSize="18dp"
+                    android:textStyle="bold"
+                    android:textAlignment="center"
+                    android:textColor="#46DD4C" />
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</RelativeLayout>

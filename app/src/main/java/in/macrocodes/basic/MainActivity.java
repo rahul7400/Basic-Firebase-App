@@ -1,6 +1,5 @@
 package in.macrocodes.basic;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,34 +9,45 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import in.macrocodes.basic.Models.Transaction;
 
 public class MainActivity extends AppCompatActivity {
 
     Button purchaseBtn,sellBtn;
+    RequestQueue requestQueue;
     RecyclerView productListView;
     TextView totalPurchase,totalsell;
     TextView lastDate,lastPurchase,lastSell;
     ProductAdapterClass mAdapter;
-    List<Product> productList = new ArrayList<>();
+    List<Transaction> productList = new ArrayList<>();
     int sellAmount=0,purchaseAmount=0;
+    String GetUrl = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        GetUrl = getResources().getString(R.string.url)+"/api/getTransactionList";
         initialize();
         clickListners();
-        Database();
+        //Database();
+        apiDatabase();
+        getTotalPurchaseSell();
 
         //Attaching Adapter and LinearLayout with Recyclerview
         mAdapter = new ProductAdapterClass(this,productList);
@@ -52,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this,AddProduct.class);
-                intent.putExtra("type","purchase");
+                intent.putExtra("type","p");
                 startActivity(intent);
             }
         });
@@ -61,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this,AddProduct.class);
-                intent.putExtra("type","sell");
+                intent.putExtra("type","s");
                 startActivity(intent);
             }
         });
@@ -78,56 +88,131 @@ public class MainActivity extends AppCompatActivity {
         lastSell = (TextView) findViewById(R.id.lastSell);
     }
 
-    void Database(){
-        productList.clear();
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
-        reference.addValueEventListener(new ValueEventListener() {
+    void apiDatabase(){
+
+        requestQueue = Volley.newRequestQueue(this);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(GetUrl,null, new Response.Listener<JSONObject>() {
             @Override
-            public void onDataChange(@NonNull  DataSnapshot snapshot) {
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-                    reference.child(Objects.requireNonNull(dataSnapshot.getKey())).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            Product product = snapshot.getValue(Product.class);
-                            productList.add(product);
-                            mAdapter.notifyDataSetChanged();
+            public void onResponse(JSONObject response) {
 
-                            //Calculating total amount of sell and purchases
-                            assert product != null;
-                            if (product.getType().equalsIgnoreCase("sell")){
-                                int total =  Integer.parseInt(product.getPrice()) * Integer.parseInt(product.getQuantity());
-                                sellAmount = sellAmount + total;
-                            }else if (product.getType().equalsIgnoreCase("purchase")){
-                                int total =  Integer.parseInt(product.getPrice()) * Integer.parseInt(product.getQuantity());
-                                purchaseAmount = purchaseAmount + total;
-                            }
+                try {
+                    JSONArray array = response.getJSONArray("response");
 
-                            //setting up the value after retrieving
-                            totalsell.setText(String.valueOf(sellAmount));
-                            totalPurchase.setText(String.valueOf(purchaseAmount));
-                            lastPurchase.setText(String.valueOf(purchaseAmount));
-                            lastSell.setText(String.valueOf(sellAmount));
-                            if (product.getDate()==null){
+                    for (int i=0;i<array.length();i++){
+
+                        JSONObject rec = array.getJSONObject(i);
+                        GsonBuilder gsonBuilder = new GsonBuilder();
+                        Gson gson = gsonBuilder.create();
+                        Transaction transaction = gson.fromJson(rec.toString(),Transaction.class);
+
+
+                        //Setting up the total purchase and total sell amounts on UI
+
+                            if (transaction.getDate()==null){
                                 lastDate.setText("No date");
                             }else{
-                                lastDate.setText(product.getDate());
+                                lastDate.setText(transaction.getDate());
                             }
 
-                        }
+                        productList.add(transaction);
+                        mAdapter.notifyDataSetChanged();
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-
             }
-
+        }, new Response.ErrorListener() {
             @Override
-            public void onCancelled(@NonNull  DatabaseError error) {
+            public void onErrorResponse(VolleyError error) {
 
             }
         });
+        requestQueue.add(jsonObjectRequest);
     }
+
+
+    void getTotalPurchaseSell(){
+        String Totalurl = getResources().getString(R.string.url)+"/api/GetTotalPurchaseAndSell";
+        JsonObjectRequest request = new JsonObjectRequest(Totalurl, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+
+
+                try {
+                    JSONArray array = response.getJSONArray("response");
+
+                    totalsell.setText(String.valueOf(array.get(1)));
+                    lastSell.setText(String.valueOf(array.get(1)));
+
+                    totalPurchase.setText(String.valueOf(array.get(0)));
+                    lastPurchase.setText(String.valueOf(array.get(0)));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+        requestQueue.add(request);
+    }
+//
+//    void Database(){
+//        productList.clear();
+//        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
+//        reference.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull  DataSnapshot snapshot) {
+//                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
+//                    reference.child(Objects.requireNonNull(dataSnapshot.getKey())).addListenerForSingleValueEvent(new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                            Product product = snapshot.getValue(Product.class);
+//                            productList.add(product);
+//                            mAdapter.notifyDataSetChanged();
+//
+//                            //Calculating total amount of sell and purchases
+//                            assert product != null;
+//                            if (product.getType().equalsIgnoreCase("sell")){
+//                                int total =  Integer.parseInt(product.getPrice()) * Integer.parseInt(product.getQuantity());
+//                                sellAmount = sellAmount + total;
+//                            }else if (product.getType().equalsIgnoreCase("purchase")){
+//                                int total =  Integer.parseInt(product.getPrice()) * Integer.parseInt(product.getQuantity());
+//                                purchaseAmount = purchaseAmount + total;
+//                            }
+//
+//                            //setting up the value after retrieving
+//                            totalsell.setText(String.valueOf(sellAmount));
+//                            totalPurchase.setText(String.valueOf(purchaseAmount));
+//                            lastPurchase.setText(String.valueOf(purchaseAmount));
+//                            lastSell.setText(String.valueOf(sellAmount));
+//                            if (product.getDate()==null){
+//                                lastDate.setText("No date");
+//                            }else{
+//                                lastDate.setText(product.getDate());
+//                            }
+//
+//                        }
+//
+//                        @Override
+//                        public void onCancelled(@NonNull DatabaseError error) {
+//
+//                        }
+//                    });
+//                }
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull  DatabaseError error) {
+//
+//            }
+//        });
+//    }
 }

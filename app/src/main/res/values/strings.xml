@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Basic Firebase App</string>
+    <string name="url">http://75d435717687.ngrok.io</string>
 </resources>

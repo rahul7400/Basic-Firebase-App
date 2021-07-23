@@ -2,7 +2,6 @@ package in.macrocodes.basic;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +13,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import in.macrocodes.basic.Models.Transaction;
+
 public class ProductAdapterClass extends RecyclerView.Adapter<ProductAdapterClass.Viewholder> {
-    List<Product> productList = new ArrayList<>();
+    List<Transaction> productList = new ArrayList<>();
     Context context;
-    public ProductAdapterClass(MainActivity mainActivity, List<Product> productList) {
+    public ProductAdapterClass(MainActivity mainActivity, List<Transaction> productList) {
         context = mainActivity;
         this.productList=productList;
     }
@@ -32,8 +33,8 @@ public class ProductAdapterClass extends RecyclerView.Adapter<ProductAdapterClas
     @Override
     public void onBindViewHolder(@NonNull ProductAdapterClass.Viewholder holder, int position) {
 
-        Product product = productList.get(position);
-        Product Lastproduct = productList.get(productList.size()-1);
+        Transaction product = productList.get(position);
+        //TransactionModel Lastproduct = productList.get(productList.size()-1);
 
         holder.pName.setText(product.getName());
 
@@ -45,18 +46,16 @@ public class ProductAdapterClass extends RecyclerView.Adapter<ProductAdapterClas
 
         holder.pUnit.setText("1*"+product.getQuantity());
 
-        if (product.getType().equalsIgnoreCase("sell")){
+        if (product.getTypeOfTransaction().equalsIgnoreCase("s")){
 
             holder.pPurchase.setVisibility(View.INVISIBLE);
             holder.pSell.setVisibility(View.VISIBLE);
-            int total = Integer.parseInt(product.getPrice())*Integer.parseInt(product.getQuantity());
-            holder.pSell.setText(String.valueOf(total));
+            holder.pSell.setText(String.valueOf(product.getTotalPrice()));
 
         }else{
             holder.pPurchase.setVisibility(View.VISIBLE);
             holder.pSell.setVisibility(View.INVISIBLE);
-            int total = Integer.parseInt(product.getPrice())*Integer.parseInt(product.getQuantity());
-            holder.pPurchase.setText(String.valueOf(total));
+            holder.pPurchase.setText(String.valueOf(product.getTotalPrice()));
 
         }
 
@@ -65,12 +64,12 @@ public class ProductAdapterClass extends RecyclerView.Adapter<ProductAdapterClas
             public void onClick(View v) {
                 Intent intent = new Intent(context,UpdateActivity.class);
                 intent.putExtra("pname",product.getName());
-                intent.putExtra("pprice",product.getPrice());
+                intent.putExtra("pprice",String.valueOf(product.getTotalPrice()));
                 intent.putExtra("pdate",product.getDate());
                 intent.putExtra("ptime",product.getTime());
                 intent.putExtra("punit",product.getUnit());
-                intent.putExtra("pquantity",product.getQuantity());
-                intent.putExtra("ptype",product.getType());
+                intent.putExtra("pquantity",String.valueOf(product.getQuantity()));
+                intent.putExtra("ptype",product.getTypeOfTransaction());
                 context.startActivity(intent);
             }
         });

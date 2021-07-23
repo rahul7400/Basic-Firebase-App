@@ -15,16 +15,28 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class AddProduct extends AppCompatActivity {
 
@@ -38,11 +50,12 @@ public class AddProduct extends AppCompatActivity {
     String unit="",name, price,quantity;
     String userdate;
     String usertime;
-
+    String CreateUrl = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_product);
+        CreateUrl = getResources().getString(R.string.url)+"/api/createTransaction";
         initialize();
         clickListners();
         liveAmount();
@@ -126,7 +139,8 @@ public class AddProduct extends AppCompatActivity {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseDatabase();
+                //FirebaseDatabase();
+                apiDatabase();
             }
         });
 
@@ -174,32 +188,74 @@ public class AddProduct extends AppCompatActivity {
         mTimePicker.show();
     }
 
-    void FirebaseDatabase(){
+    void apiDatabase(){
 
-        //Uploading data to Firebase
         String type = getIntent().getStringExtra("type");
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        JSONObject object = new JSONObject();
+        try {
 
-        HashMap<String,Object> map = new HashMap<>();
-        map.put("name",productName.getText().toString());
-        map.put("price",productPrice.getText().toString());
-        map.put("quantity",productQuantity.getText().toString());
-        map.put("unit",unit);
-        map.put("date",userdate);
-        map.put("time",usertime);
-        map.put("type",type);
+            int total = Integer.parseInt(productPrice.getText().toString()) * Integer.parseInt(productQuantity.getText().toString());
 
-        reference.child(productName.getText().toString()).updateChildren(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+            object.put("totalPrice",total);
+            object.put("name",productName.getText().toString());
+            object.put("pricePerItem",productPrice.getText().toString());
+            object.put("quantity",productQuantity.getText().toString());
+            object.put("unit",unit);
+            object.put("date",userdate);
+            object.put("time",usertime);
+            object.put("typeOfTransaction",type);
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, CreateUrl, object, new Response.Listener<JSONObject>() {
             @Override
-            public void onSuccess(Void unused) {
+            public void onResponse(JSONObject response) {
                 Toast.makeText(AddProduct.this, "Product Updated", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(AddProduct.this,MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
             }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(AddProduct.this, "Error - "+error, Toast.LENGTH_SHORT).show();
+
+            }
         });
+
+        requestQueue.add(jsonObjectRequest);
     }
+//    void FirebaseDatabase(){
+//
+//        //Uploading data to Firebase
+//        String type = getIntent().getStringExtra("type");
+//        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
+//
+//        HashMap<String,Object> map = new HashMap<>();
+//        map.put("name",productName.getText().toString());
+//        map.put("price",productPrice.getText().toString());
+//        map.put("quantity",productQuantity.getText().toString());
+//        map.put("unit",unit);
+//        map.put("date",userdate);
+//        map.put("time",usertime);
+//        map.put("type",type);
+//
+//        reference.child(productName.getText().toString()).updateChildren(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+//            @Override
+//            public void onSuccess(Void unused) {
+//                Toast.makeText(AddProduct.this, "Product Updated", Toast.LENGTH_SHORT).show();
+//                Intent intent = new Intent(AddProduct.this,MainActivity.class);
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//                startActivity(intent);
+//                finish();
+//            }
+//        });
+//    }
 
     void liveAmount(){
         productPrice.addTextChangedListener(new TextWatcher() {

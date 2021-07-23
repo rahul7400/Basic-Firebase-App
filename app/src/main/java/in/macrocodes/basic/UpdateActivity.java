@@ -17,14 +17,24 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Random;
 
 public class UpdateActivity extends AppCompatActivity {
     
@@ -40,11 +50,13 @@ public class UpdateActivity extends AppCompatActivity {
     String usertime;
     Product product;
     String type;
+    String updateUrl = "";
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update);
+        updateUrl = getResources().getString(R.string.url)+"/api/updateTransaction";
         initialize();
         clickListners();
         liveAmount();
@@ -144,11 +156,56 @@ public class UpdateActivity extends AppCompatActivity {
         update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseDatabase();
+               //FirebaseDatabase();
+                apiDatabase();
             }
         });
 
 
+    }
+
+    void apiDatabase(){
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.getCache().clear();
+        JSONObject object = new JSONObject();
+        try {
+
+            int total = Integer.parseInt(productPrice.getText().toString()) * Integer.parseInt(productQuantity.getText().toString());
+
+            Random rand = new Random();
+
+            object.put("id",rand.nextInt(1000));
+            object.put("totalPrice",total);
+            object.put("name",productName.getText().toString());
+            object.put("pricePerItem",productPrice.getText().toString());
+            object.put("quantity",productQuantity.getText().toString());
+            object.put("unit",productUnit.getText().toString());
+            object.put("typeOfTransaction",type);
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.PUT, updateUrl, object, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Toast.makeText(UpdateActivity.this, "Product Updated", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(UpdateActivity.this,MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(UpdateActivity.this, "Error - "+error, Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+        requestQueue.add(jsonObjectRequest);
     }
 
     void updateDate() {
@@ -191,31 +248,34 @@ public class UpdateActivity extends AppCompatActivity {
         mTimePicker.show();
     }
 
-    void FirebaseDatabase(){
 
-        //Uploading data to Firebase
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
 
-        HashMap<String,Object> map = new HashMap<>();
-        map.put("name",productName.getText().toString());
-        map.put("price",productPrice.getText().toString());
-        map.put("quantity",productQuantity.getText().toString());
-        map.put("unit",productUnit.getText().toString());
-        map.put("date",currentDate.getText().toString());
-        map.put("time",currentTime.getText().toString());
-        map.put("type",type);
 
-        reference.child(productName.getText().toString()).setValue(map).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void unused) {
-                Toast.makeText(UpdateActivity.this, "Product Updated", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(UpdateActivity.this,MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
-            }
-        });
-    }
+//    void FirebaseDatabase(){
+//
+//        //Uploading data to Firebase
+//        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Products");
+//
+//        HashMap<String,Object> map = new HashMap<>();
+//        map.put("name",productName.getText().toString());
+//        map.put("price",productPrice.getText().toString());
+//        map.put("quantity",productQuantity.getText().toString());
+//        map.put("unit",productUnit.getText().toString());
+//        map.put("date",currentDate.getText().toString());
+//        map.put("time",currentTime.getText().toString());
+//        map.put("type",type);
+//
+//        reference.child(productName.getText().toString()).setValue(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+//            @Override
+//            public void onSuccess(Void unused) {
+//                Toast.makeText(UpdateActivity.this, "Product Updated", Toast.LENGTH_SHORT).show();
+//                Intent intent = new Intent(UpdateActivity.this,MainActivity.class);
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//                startActivity(intent);
+//                finish();
+//            }
+//        });
+//    }
 
     void liveAmount(){
         productPrice.addTextChangedListener(new TextWatcher() {
